@@ -352,3 +352,5 @@ export class GhostsignActions implements INodeType {
 		return [out];
 	}
 }
+
+export default GhostsignActions;

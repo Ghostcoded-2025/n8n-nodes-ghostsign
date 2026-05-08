@@ -74,3 +74,5 @@ export class GhostsignApi implements ICredentialType {
 		],
 	};
 }
+
+export default GhostsignApi;

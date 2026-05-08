@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"description": "n8n community nodes for Ghostsign programmatic APIs hosted on Supabase Edge.",
 	"license": "MIT",
-	"homepage": "https://github.com/ghostcoded/n8n-nodes-ghostsign#readme",
+	"homepage": "https://github.com/Ghostcoded-2025/n8n-nodes-ghostsign#readme",
 	"keywords": ["n8n-community-node-package", "ghostsign", "signatures", "proposals"],
 	"author": {
 		"name": "tanner woodrum",
@@ -11,7 +11,11 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ghostcoded/n8n-nodes-ghostsign.git"
+		"url": "git+https://github.com/Ghostcoded-2025/n8n-nodes-ghostsign.git"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
 	},
 	"scripts": {
 		"build": "n8n-node build",

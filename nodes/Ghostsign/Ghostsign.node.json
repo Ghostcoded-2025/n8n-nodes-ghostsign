@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-ghostsign",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Productivity"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/ghostcoded/n8n-nodes-ghostsign#credential"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/ghostcoded/n8n-nodes-ghostsign"
+			}
+		]
+	}
+}

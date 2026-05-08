@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-ghostsign",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "n8n community nodes for Ghostsign programmatic APIs hosted on Supabase Edge.",
 	"license": "MIT",
 	"homepage": "https://github.com/Ghostcoded-2025/n8n-nodes-ghostsign#readme",
@@ -35,6 +35,9 @@
 			"dist/nodes/Ghostsign/Ghostsign.node.js",
 			"dist/nodes/GhostsignActions/GhostsignActions.node.js"
 		]
+	},
+	"dependencies": {
+		"n8n-workflow": "*"
 	},
 	"devDependencies": {
 		"@n8n/node-cli": "*",

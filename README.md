@@ -12,6 +12,8 @@ n8n-nodes-ghostsign
 
 Alternatively `npm install n8n-nodes-ghostsign` into a custom Docker image alongside n8n’s installation instructions.
 
+If install spins then errors with **“Class could not be found”**, n8n may still have stale files under the community‑nodes folder. Stop n8n, remove `nodes/node_modules` (and orphaned `package.json`/`package-lock.json` at that level per [n8n host notes](https://www.hostinger.com/support/the-specified-package-could-not-be-loaded-when-using-n8n-community-nodes/)), restart, and install again. Docker: wipe `…/.n8n/nodes/` contents for the container user accordingly.
+
 ## Credential
 
 Use **Ghostsign API** credential:
@@ -51,4 +53,3 @@ npm run dev   # local n8n with this package linked
 ## Publishing
 
 Trusted publishing expects GitHub Actions + npm OIDC (see [.github/workflows/publish.yml](.github/workflows/publish.yml)). Configure npm **Trusted Publishers** or set `NPM_TOKEN`, then bump via `npm run release`.
-# n8n-nodes-ghostsign

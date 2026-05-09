@@ -52,4 +52,4 @@ npm run dev   # local n8n with this package linked
 
 ## Publishing
 
-Trusted publishing expects GitHub Actions + npm OIDC (see [.github/workflows/publish.yml](.github/workflows/publish.yml)). Configure npm **Trusted Publishers** or set `NPM_TOKEN`, then bump via `npm run release`.
+See **[PUBLISHING.md](./PUBLISHING.md)** for npm/GitHub Actions release steps (`NPM_TOKEN` vs Trusted Publishing, semver tags, and provenance).

@@ -1,10 +1,15 @@
 import type { ICredentialTestRequest, ICredentialType, INodeProperties } from 'n8n-workflow';
 
+import { GHOSTSIGN_SUPABASE_PUBLISHABLE_KEY, GHOSTSIGN_SUPABASE_URL } from './ghostsignPublicConfig';
+
 export type GhostsignApiCredentialData = {
 	supabaseUrl: string;
 	supabaseAnonKey: string;
 	apiKeyBearer: string;
 };
+
+const ghostsignApiTestUrl =
+	`${GHOSTSIGN_SUPABASE_URL.replace(/\/+$/, '')}/functions/v1/ghostsign-api`;
 
 export class GhostsignApi implements ICredentialType {
 	name = 'ghostsignApi';
@@ -17,44 +22,23 @@ export class GhostsignApi implements ICredentialType {
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Supabase URL',
-			name: 'supabaseUrl',
-			type: 'string',
-			placeholder: 'https://YOUR_PROJECT.supabase.co',
-			description:
-				'Your Supabase project URL (HTTPS origin only—no trailing path). Requests go to `/functions/v1/...`.',
-			required: true,
-			default: '',
-		},
-		{
-			displayName: 'Supabase Anonymous Key',
-			name: 'supabaseAnonKey',
-			type: 'string',
-			typeOptions: { password: true },
-			required: true,
-			default: '',
-			description:
-				'Sent as the `apikey` header on every Edge request (publishable anon key—same as the app front-end).',
-		},
-		{
-			displayName: 'API Key or JWT (Bearer)',
+			displayName: 'API Key',
 			name: 'apiKeyBearer',
 			type: 'string',
 			typeOptions: { password: true },
 			required: true,
 			default: '',
-			description:
-				'Used as `Authorization: Bearer …`. For automation prefer a Ghostsign programmatic key (`gc_live_…`).',
+			description: 'Ghostsign programmatic key (`gc_live_…`) with scopes needed for these operations.',
 		},
 	];
 
 	test: ICredentialTestRequest = {
 		request: {
 			method: 'POST',
-			url: "={{ (($credentials.supabaseUrl || '').toString()).trim().replace(/\\/$/, '') + '/functions/v1/ghostsign-api' }}",
+			url: ghostsignApiTestUrl,
 			headers: {
 				Authorization: '=Bearer {{$credentials.apiKeyBearer}}',
-				apikey: '={{$credentials.supabaseAnonKey}}',
+				apikey: GHOSTSIGN_SUPABASE_PUBLISHABLE_KEY,
 			},
 			body: {
 				op: 'organizations.list',
@@ -68,7 +52,7 @@ export class GhostsignApi implements ICredentialType {
 				properties: {
 					value: 200,
 					message:
-						'Could not reach Ghostsign — verify URL, anon `apikey`, Bearer token or JWT, scopes (`ghostsign:org:read` for this test), and rate limits.',
+						'Could not reach Ghostsign — verify API key, scopes (`ghostsign:org:read` for this test), network, and rate limits.',
 				},
 			},
 		],

@@ -16,13 +16,13 @@ If install spins then errors with **“Class could not be found”**, n8n may st
 
 ## Credential
 
-Use **Ghostsign API** credential:
+Use **Ghostsign API** credential (only asks for):
 
 | Field | Purpose |
 | --- | --- |
-| **Supabase URL** | HTTPS origin (`https://<project-ref>.supabase.co`) |
-| **Supabase anon key** | Sent as header `apikey` on every POST |
-| **API key / JWT** | Goes in `Authorization: Bearer …`; automation keys must include scopes for the chosen operations |
+| **API key** | Ghostsign programmatic key (`gc_live_…`); scopes must match chosen operations |
+
+The Supabase project URL and publishable **`apikey`** header are bundled with the package and are not editable in the credential form.
 
 Mis-scoped keys return **403**. **429** may include `Retry-After` — add Wait / Retry for batch mail (`ghostsign-send-for-signature`, `ghostsign-resend-finalize-email`).
 

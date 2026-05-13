@@ -20,7 +20,7 @@ import {
 	ghostsignResolveActionsEndpoint,
 } from './namedBodies';
 
-const OPS_PROJECT_CORE = ['signingSend', 'signingResend', 'aiFill', 'renderPreview', 'extractEmbed'];
+const OPS_PROJECT_CORE = ['signingSend', 'signingResend', 'aiFill', 'projectChat', 'renderPreview', 'extractEmbed'];
 
 const OPS_ORGS = ['upsertWebhook', 'upsertSmtp'];
 
@@ -33,7 +33,7 @@ export class GhostsignActions implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
 		description:
-			'Ghostsign automation helpers covering signing delivery, previews, embeddings, SMTP, AI fill, and webhooks.',
+			'Ghostsign automation helpers covering signing delivery, previews, embeddings, SMTP, AI fill, chat with project, and webhooks.',
 		defaults: { name: 'Ghostsign Actions' },
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
@@ -51,6 +51,13 @@ export class GhostsignActions implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
+					{
+						action: 'Ask model about a project using embeddings and notes RAG',
+						name: 'AI › Chat With Project',
+						value: 'projectChat',
+						description:
+							'Requires scoped key `ghostsign:ai:chat`, Growth+ tier, embedded context, and BYOK credentials like AI Fill',
+					},
 					{
 						action: 'Invoke ghostsign ai fill for embeddings aware variable generation',
 						name: 'AI › Fill Variable',
@@ -104,12 +111,27 @@ export class GhostsignActions implements INodeType {
 				displayOptions: { show: { operation: OPS_PROJECT_CORE } },
 			},
 			{
-				displayName: 'Variable Name',
-				name: 'variableNameAi',
+				displayName: 'Chat Message',
+				name: 'projectChatMessage',
 				type: 'string',
 				default: '',
-				displayOptions: { show: { operation: ['aiFill'] } },
-				description: 'Exact `{{placeholder}}` slug taken from Ghostsign ingestion metadata',
+				displayOptions: { show: { operation: ['projectChat'] } },
+				description: 'Question answered with snippets from notes and embeddings',
+				typeOptions: {
+					rows: 4,
+				},
+			},
+			{
+				displayName: 'Conversation JSON (Optional)',
+				name: 'projectChatConversationJson',
+				type: 'string',
+				default: '',
+				displayOptions: { show: { operation: ['projectChat'] } },
+				description:
+					'Omit the newest utterance (`Chat Message` holds it). JSON array `[{"role":"user"|"assistant","content":"..."}]`; server trims to about 24 turns.',
+				typeOptions: {
+					rows: 6,
+				},
 			},
 			{
 				displayName: 'Extra Prompt (Optional)',

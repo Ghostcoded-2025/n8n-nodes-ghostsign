@@ -1,5 +1,5 @@
 import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
-import { ApplicationError } from 'n8n-workflow';
+import { ApplicationError, NodeOperationError } from 'n8n-workflow';
 
 function str(this: IExecuteFunctions, idx: number, name: string, def = ''): string {
 	const v = this.getNodeParameter(name, idx, def) as string;
@@ -15,6 +15,8 @@ export function ghostsignResolveActionsEndpoint(operation: string): string {
 			return 'ghostsign-resend-finalize-email';
 		case 'aiFill':
 			return 'ghostsign-ai-fill';
+		case 'projectChat':
+			return 'ghostsign-project-chat';
 		case 'renderPreview':
 			return 'ghostsign-render-preview';
 		case 'extractEmbed':
@@ -47,6 +49,42 @@ export function ghostsignBuildNamedOpBody(
 
 			if (extra) {
 				body.extra_user_prompt = extra;
+			}
+
+			return body;
+		}
+
+		case 'ghostsign-project-chat': {
+			const chatMessage = str.call(this, itemIndex, 'projectChatMessage');
+			if (!chatMessage) {
+				throw new NodeOperationError(this.getNode(), 'Project Chat requires Chat Message body text.', {
+					itemIndex,
+				});
+			}
+
+			const body: IDataObject = {
+				project_id: str.call(this, itemIndex, 'projectId'),
+				message: chatMessage,
+			};
+
+			const historyRaw = str.call(this, itemIndex, 'projectChatConversationJson', '');
+			if (historyRaw) {
+				let parsedConv: unknown;
+				try {
+					parsedConv = JSON.parse(historyRaw) as unknown;
+				} catch {
+					throw new NodeOperationError(
+						this.getNode(),
+						'Conversation JSON must be valid JSON (`[{"role":"user"|"assistant","content":"..."}]`).',
+						{ itemIndex },
+					);
+				}
+				if (!Array.isArray(parsedConv)) {
+					throw new NodeOperationError(this.getNode(), 'Conversation JSON must be a JSON array.', {
+						itemIndex,
+					});
+				}
+				body.conversation = parsedConv;
 			}
 
 			return body;

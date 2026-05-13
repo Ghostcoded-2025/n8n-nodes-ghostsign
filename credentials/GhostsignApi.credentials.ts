@@ -28,7 +28,7 @@ export class GhostsignApi implements ICredentialType {
 			typeOptions: { password: true },
 			required: true,
 			default: '',
-			description: 'Ghostsign programmatic key (`gc_live_…`) with scopes needed for these operations.',
+			description: 'Ghostsign programmatic key (`gc_live_…`) with scopes for these operations (`ghostsign:ai:chat` for Project Chat; `ghostsign:ai:write` for Fill Variable).',
 		},
 	];
 

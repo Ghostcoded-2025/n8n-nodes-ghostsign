@@ -31,6 +31,8 @@ const PROJECT_OPS_REQUIRING_ID = [
 	'projects.archive',
 	'projects.unarchive',
 	'previews.list',
+	'project.chat',
+	'project.research',
 ];
 
 const ORG_SELECTOR_OPS = ['templates.list', 'projects.list', 'projects.create', 'projects.clone'];
@@ -64,11 +66,13 @@ export class Ghostsign implements INodeType {
 					{ name: 'Organizations › List Workspaces', value: 'organizations.list' },
 					{ name: 'Previews › List', value: 'previews.list' },
 					{ name: 'Projects › Archive', value: 'projects.archive' },
+					{ name: 'Projects › Chat With Project', value: 'project.chat' },
 					{ name: 'Projects › Clone', value: 'projects.clone' },
 					{ name: 'Projects › Create', value: 'projects.create' },
 					{ name: 'Projects › Delete', value: 'projects.delete' },
 					{ name: 'Projects › Get', value: 'projects.get' },
 					{ name: 'Projects › List', value: 'projects.list' },
+					{ name: 'Projects › Research With Project', value: 'project.research' },
 					{ name: 'Projects › Unarchive', value: 'projects.unarchive' },
 					{ name: 'Projects › Update', value: 'projects.update' },
 					{ name: 'Signature Assignments › Create', value: 'signature_assignments.create' },
@@ -215,6 +219,23 @@ export class Ghostsign implements INodeType {
 				displayOptions: { show: { operation: ['projects.update'] } },
 				default: '',
 				description: 'Renames proposals in draft or satisfies completed-proposal rename-only edits when used alone',
+			},
+			{
+				displayName: 'Message',
+				name: 'projectUnifiedAiMessage',
+				type: 'string',
+				typeOptions: { rows: 4 },
+				displayOptions: { show: { operation: ['project.chat', 'project.research'] } },
+				default: '',
+				description: 'Maps to **`ghostsign-api`** `project.chat` / `project.research` bodies (`message`)',
+			},
+			{
+				displayName: 'Session ID (Optional)',
+				name: 'projectUnifiedSessionId',
+				type: 'string',
+				displayOptions: { show: { operation: ['project.chat', 'project.research'] } },
+				default: '',
+				description: 'From the prior response `session_id` to continue a persisted thread',
 			},
 			{
 				displayName: 'Parsed Variables JSON',

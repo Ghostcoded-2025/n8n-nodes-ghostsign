@@ -20,7 +20,7 @@ import {
 	ghostsignResolveActionsEndpoint,
 } from './namedBodies';
 
-const OPS_PROJECT_CORE = ['signingSend', 'signingResend', 'aiFill', 'projectChat', 'renderPreview', 'extractEmbed'];
+const OPS_PROJECT_CORE = ['signingSend', 'signingResend', 'aiFill', 'projectChat', 'projectResearch', 'renderPreview', 'extractEmbed'];
 
 const OPS_ORGS = ['upsertWebhook', 'upsertSmtp'];
 
@@ -63,6 +63,13 @@ export class GhostsignActions implements INodeType {
 						name: 'AI › Fill Variable',
 						value: 'aiFill',
 						description: 'Requires `ghostsign:ai:write` plus BYOK credentials on the key owner',
+					},
+					{
+						action: 'Ask model about a project using embeddings and web research',
+						name: 'AI › Research With Project',
+						value: 'projectResearch',
+						description:
+							'Requires scoped key `ghostsign:ai:chat`, Growth+ tier, embedded context, BYOK, and platform web search env on Edge',
 					},
 					{
 						action: 'Invoke ghostsign extract embed for storage or manual text chunks',
@@ -115,23 +122,19 @@ export class GhostsignActions implements INodeType {
 				name: 'projectChatMessage',
 				type: 'string',
 				default: '',
-				displayOptions: { show: { operation: ['projectChat'] } },
-				description: 'Question answered with snippets from notes and embeddings',
+				displayOptions: { show: { operation: ['projectChat', 'projectResearch'] } },
+				description: 'Question answered with snippets from notes and embeddings (chat) or plus web results (research)',
 				typeOptions: {
 					rows: 4,
 				},
 			},
 			{
-				displayName: 'Conversation JSON (Optional)',
-				name: 'projectChatConversationJson',
+				displayName: 'Session ID (Optional)',
+				name: 'projectChatSessionId',
 				type: 'string',
 				default: '',
-				displayOptions: { show: { operation: ['projectChat'] } },
-				description:
-					'Omit the newest utterance (`Chat Message` holds it). JSON array `[{"role":"user"|"assistant","content":"..."}]`; server trims to about 24 turns.',
-				typeOptions: {
-					rows: 6,
-				},
+				displayOptions: { show: { operation: ['projectChat', 'projectResearch'] } },
+				description: 'From the prior **`session_id`** in the JSON response to continue the same thread',
 			},
 			{
 				displayName: 'Variable Name',

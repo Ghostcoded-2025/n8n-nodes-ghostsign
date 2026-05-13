@@ -94,6 +94,24 @@ export async function ghostsignBuildDataApiBody(
 		case 'previews.list':
 			return { op: 'previews.list', project_id: str.call(this, itemIndex, 'projectId') };
 
+		case 'project.chat':
+		case 'project.research': {
+			const messageUnified = str.call(this, itemIndex, 'projectUnifiedAiMessage', '');
+			if (!messageUnified) {
+				throw new ApplicationError('project.chat and project.research require Message');
+			}
+			const bodyUnified: IDataObject = {
+				op: operation,
+				project_id: str.call(this, itemIndex, 'projectId'),
+				message: messageUnified,
+			};
+			const sessionUnified = str.call(this, itemIndex, 'projectUnifiedSessionId', '');
+			if (sessionUnified) {
+				bodyUnified.session_id = sessionUnified;
+			}
+			return bodyUnified;
+		}
+
 		case 'signature_assignments.list':
 			return { op: 'signature_assignments.list', project_id: str.call(this, itemIndex, 'projectId') };
 

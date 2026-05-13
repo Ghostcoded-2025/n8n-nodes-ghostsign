@@ -15,8 +15,8 @@ export function ghostsignResolveActionsEndpoint(operation: string): string {
 			return 'ghostsign-resend-finalize-email';
 		case 'aiFill':
 			return 'ghostsign-ai-fill';
-		case 'projectChat':
-			return 'ghostsign-project-chat';
+		case 'projectResearch':
+			return 'ghostsign-project-research';
 		case 'renderPreview':
 			return 'ghostsign-render-preview';
 		case 'extractEmbed':
@@ -54,10 +54,11 @@ export function ghostsignBuildNamedOpBody(
 			return body;
 		}
 
-		case 'ghostsign-project-chat': {
+		case 'ghostsign-project-chat':
+		case 'ghostsign-project-research': {
 			const chatMessage = str.call(this, itemIndex, 'projectChatMessage');
 			if (!chatMessage) {
-				throw new NodeOperationError(this.getNode(), 'Project Chat requires Chat Message body text.', {
+				throw new NodeOperationError(this.getNode(), 'Chat With Project / Research requires Chat Message body text.', {
 					itemIndex,
 				});
 			}
@@ -67,24 +68,9 @@ export function ghostsignBuildNamedOpBody(
 				message: chatMessage,
 			};
 
-			const historyRaw = str.call(this, itemIndex, 'projectChatConversationJson', '');
-			if (historyRaw) {
-				let parsedConv: unknown;
-				try {
-					parsedConv = JSON.parse(historyRaw) as unknown;
-				} catch {
-					throw new NodeOperationError(
-						this.getNode(),
-						'Conversation JSON must be valid JSON (`[{"role":"user"|"assistant","content":"..."}]`).',
-						{ itemIndex },
-					);
-				}
-				if (!Array.isArray(parsedConv)) {
-					throw new NodeOperationError(this.getNode(), 'Conversation JSON must be a JSON array.', {
-						itemIndex,
-					});
-				}
-				body.conversation = parsedConv;
+			const sessionIdRaw = str.call(this, itemIndex, 'projectChatSessionId', '');
+			if (sessionIdRaw) {
+				body.session_id = sessionIdRaw;
 			}
 
 			return body;

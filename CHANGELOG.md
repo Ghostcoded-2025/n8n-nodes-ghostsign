@@ -1,3 +1,7 @@
+## 0.1.7
+
+- **Ghostsign Actions › AI › Fill Variable**: expose **Variable Name** (`variableNameAi`) so the UI matches `ghostsign-ai-fill` (`project_id` + `variable_name`).
+
 ## 0.1.5
 
 - **Ghostsign API** credential: single **API Key** field; fixed Supabase origin and publishable `apikey` ship in-package (same visibility as frontend `NEXT_PUBLIC_*` vars).

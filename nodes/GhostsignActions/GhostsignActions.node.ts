@@ -134,6 +134,15 @@ export class GhostsignActions implements INodeType {
 				},
 			},
 			{
+				displayName: 'Variable Name',
+				name: 'variableNameAi',
+				type: 'string',
+				default: '',
+				displayOptions: { show: { operation: ['aiFill'] } },
+				description: 'Single template placeholder to fill via ghostsign-ai-fill (repeat the node or loop items for multiple vars)',
+				placeholder: 'e.g. client_company_name',
+			},
+			{
 				displayName: 'Extra Prompt (Optional)',
 				name: 'extraAiPrompt',
 				type: 'string',

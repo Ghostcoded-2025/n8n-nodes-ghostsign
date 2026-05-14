@@ -1,3 +1,15 @@
+## 0.1.9
+
+- Fixed **Ghostsign Actions › AI › Chat With Project** endpoint routing (`projectChat` now maps to `ghostsign-project-chat`).
+- Added **Ghostsign Actions › Preview › Send Review Links** (`ghostsign-proposal-review-send`) with recipients JSON support.
+- Added **Ghostsign Actions › Integrations › SMTP Test** (`ghostsign-smtp-test`) to verify saved workspace SMTP.
+- Added **Ghostsign Actions** coverage for current template/workspace endpoints:
+  - `ghostsign-ai-template-draft`
+  - `ghostsign-publish-template-draft`
+  - `ghostsign-ingest-template`
+  - `ghostsign-clone-library-template`
+  - `ghostsign-clone-workspace`
+
 ## 0.1.7
 
 - **Ghostsign Actions › AI › Fill Variable**: expose **Variable Name** (`variableNameAi`) so the UI matches `ghostsign-ai-fill` (`project_id` + `variable_name`).

@@ -1,5 +1,5 @@
 import type { IDataObject, IExecuteFunctions } from 'n8n-workflow';
-import { ApplicationError, NodeOperationError } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 function str(this: IExecuteFunctions, idx: number, name: string, def = ''): string {
 	const v = this.getNodeParameter(name, idx, def) as string;
@@ -15,19 +15,137 @@ export function ghostsignResolveActionsEndpoint(operation: string): string {
 			return 'ghostsign-resend-finalize-email';
 		case 'aiFill':
 			return 'ghostsign-ai-fill';
+		case 'aiTemplateDraft':
+			return 'ghostsign-ai-template-draft';
+		case 'publishTemplateDraft':
+			return 'ghostsign-publish-template-draft';
+		case 'projectChat':
+			return 'ghostsign-project-chat';
 		case 'projectResearch':
 			return 'ghostsign-project-research';
 		case 'renderPreview':
 			return 'ghostsign-render-preview';
+		case 'proposalReviewSend':
+			return 'ghostsign-proposal-review-send';
 		case 'extractEmbed':
 			return 'ghostsign-extract-embed';
+		case 'smtpTest':
+			return 'ghostsign-smtp-test';
+		case 'ingestTemplate':
+			return 'ghostsign-ingest-template';
+		case 'cloneLibraryTemplate':
+			return 'ghostsign-clone-library-template';
+		case 'cloneWorkspace':
+			return 'ghostsign-clone-workspace';
 		case 'upsertSmtp':
 			return 'ghostsign-upsert-smtp';
 		case 'upsertWebhook':
 			return 'ghostsign-upsert-webhook';
 		default:
-			throw new ApplicationError(`Unknown Ghostsign Actions operation: ${operation}`);
+			throw new Error(`Unknown Ghostsign Actions operation: ${operation}`);
 	}
+}
+
+function parseRecipientsJson(
+	this: IExecuteFunctions,
+	itemIndex: number,
+	raw: string,
+): Array<{ email: string; name?: string }> {
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`Recipients JSON must be valid JSON: ${(error as Error).message}`,
+			{ itemIndex },
+		);
+	}
+
+	if (!Array.isArray(parsed) || parsed.length === 0) {
+		throw new NodeOperationError(this.getNode(), 'Recipients JSON must be a non-empty array.', {
+			itemIndex,
+		});
+	}
+
+	const recipients: Array<{ email: string; name?: string }> = [];
+
+	for (const entry of parsed) {
+		if (typeof entry !== 'object' || entry === null) {
+			throw new NodeOperationError(
+				this.getNode(),
+				'Each recipient must be an object with at least an email field.',
+				{ itemIndex },
+			);
+		}
+
+		const row = entry as Record<string, unknown>;
+		const email = typeof row.email === 'string' ? row.email.trim() : '';
+		if (email === '') {
+			throw new NodeOperationError(this.getNode(), 'Each recipient must include a non-empty email.', {
+				itemIndex,
+			});
+		}
+
+		const recipient: { email: string; name?: string } = { email };
+		const name = typeof row.name === 'string' ? row.name.trim() : '';
+		if (name !== '') {
+			recipient.name = name;
+		}
+		recipients.push(recipient);
+	}
+
+	return recipients;
+}
+
+function parseAiDraftMessages(
+	this: IExecuteFunctions,
+	itemIndex: number,
+	raw: string,
+): Array<{ role: 'user' | 'assistant'; content: string }> {
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`AI Draft Messages JSON must be valid JSON: ${(error as Error).message}`,
+			{ itemIndex },
+		);
+	}
+
+	if (!Array.isArray(parsed) || parsed.length === 0) {
+		throw new NodeOperationError(this.getNode(), 'AI Draft Messages JSON must be a non-empty array.', {
+			itemIndex,
+		});
+	}
+
+	const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+	for (const entry of parsed) {
+		if (typeof entry !== 'object' || entry === null) {
+			throw new NodeOperationError(this.getNode(), 'Each AI draft message must be an object.', {
+				itemIndex,
+			});
+		}
+
+		const row = entry as Record<string, unknown>;
+		const role = row.role;
+		const content = typeof row.content === 'string' ? row.content.trim() : '';
+		if ((role !== 'user' && role !== 'assistant') || content === '') {
+			throw new NodeOperationError(
+				this.getNode(),
+				'Each AI draft message requires `role` ("user" or "assistant") and non-empty `content`.',
+				{ itemIndex },
+			);
+		}
+
+		messages.push({ role, content });
+	}
+
+	return messages;
 }
 
 export function ghostsignBuildNamedOpBody(
@@ -49,6 +167,38 @@ export function ghostsignBuildNamedOpBody(
 
 			if (extra) {
 				body.extra_user_prompt = extra;
+			}
+
+			return body;
+		}
+
+		case 'ghostsign-ai-template-draft': {
+			const body: IDataObject = {
+				mode: str.call(this, itemIndex, 'aiDraftMode', 'organization'),
+				document_body: str.call(this, itemIndex, 'aiDraftDocumentBody'),
+				messages: parseAiDraftMessages.call(this, itemIndex, str.call(this, itemIndex, 'aiDraftMessagesJson')),
+			};
+
+			if (body.mode === 'organization') {
+				body.organization_id = str.call(this, itemIndex, 'organizationIdUpsert');
+			}
+
+			return body;
+		}
+
+		case 'ghostsign-publish-template-draft': {
+			const body: IDataObject = {
+				mode: str.call(this, itemIndex, 'publishDraftMode', 'organization'),
+				document_body: str.call(this, itemIndex, 'publishDraftDocumentBody'),
+			};
+
+			if (body.mode === 'organization') {
+				body.organization_id = str.call(this, itemIndex, 'organizationIdUpsert');
+			}
+
+			const displayName = str.call(this, itemIndex, 'publishDraftDisplayName');
+			if (displayName) {
+				body.display_name = displayName;
 			}
 
 			return body;
@@ -87,6 +237,32 @@ export function ghostsignBuildNamedOpBody(
 			return body;
 		}
 
+		case 'ghostsign-proposal-review-send': {
+			const recipientsRaw = str.call(this, itemIndex, 'reviewRecipientsJson');
+			if (!recipientsRaw) {
+				throw new NodeOperationError(this.getNode(), 'Proposal review send requires Recipients JSON.', {
+					itemIndex,
+				});
+			}
+
+			const body: IDataObject = {
+				project_id: str.call(this, itemIndex, 'projectId'),
+				recipients: parseRecipientsJson.call(this, itemIndex, recipientsRaw),
+			};
+
+			const reviewLabel = str.call(this, itemIndex, 'reviewLabel');
+			if (reviewLabel) {
+				body.label = reviewLabel;
+			}
+
+			const reviewMessage = str.call(this, itemIndex, 'reviewMessage');
+			if (reviewMessage) {
+				body.message = reviewMessage;
+			}
+
+			return body;
+		}
+
 		case 'ghostsign-extract-embed': {
 			const body: IDataObject = { project_id: str.call(this, itemIndex, 'projectId') };
 			const mode = this.getNodeParameter('embedSourceMode', itemIndex, 'manualText') as string;
@@ -95,14 +271,18 @@ export function ghostsignBuildNamedOpBody(
 			if (mode === 'manualText') {
 				const txt = str.call(this, itemIndex, 'embedManualText');
 				if (!txt) {
-					throw new ApplicationError('Manual text ingest requires embed text body content');
+					throw new NodeOperationError(this.getNode(), 'Manual text ingest requires embed text body content', {
+						itemIndex,
+					});
 				}
 
 				body.text = txt;
 			} else {
 				const storage = str.call(this, itemIndex, 'embedStoragePath');
 				if (!storage) {
-					throw new ApplicationError('Storage path ingest requires a storage bucket path');
+					throw new NodeOperationError(this.getNode(), 'Storage path ingest requires a storage bucket path', {
+						itemIndex,
+					});
 				}
 
 				body.storage_path = storage;
@@ -118,6 +298,67 @@ export function ghostsignBuildNamedOpBody(
 
 			Object.keys(body).forEach((k) => body[k as keyof IDataObject] === undefined && delete body[k]);
 
+			return body;
+		}
+
+		case 'ghostsign-smtp-test':
+			return {
+				organization_id: str.call(this, itemIndex, 'organizationIdUpsert'),
+				to: str.call(this, itemIndex, 'smtpTestTo'),
+			};
+
+		case 'ghostsign-ingest-template': {
+			const body: IDataObject = {
+				organization_id: str.call(this, itemIndex, 'organizationIdUpsert'),
+			};
+			const mode = str.call(this, itemIndex, 'ingestMode', 'create');
+			if (mode === 'refresh') {
+				body.template_id = str.call(this, itemIndex, 'ingestTemplateId');
+				return body;
+			}
+
+			const docUrl = str.call(this, itemIndex, 'ingestDocUrl');
+			const documentId = str.call(this, itemIndex, 'ingestDocumentId');
+			if (!docUrl && !documentId) {
+				throw new NodeOperationError(
+					this.getNode(),
+					'Ingest create mode requires Google Doc URL or Google Document ID.',
+					{ itemIndex },
+				);
+			}
+			if (docUrl) {
+				body.doc_url = docUrl;
+			}
+			if (documentId) {
+				body.document_id = documentId;
+			}
+			const ingestDisplayName = str.call(this, itemIndex, 'ingestDisplayName');
+			if (ingestDisplayName) {
+				body.display_name = ingestDisplayName;
+			}
+			return body;
+		}
+
+		case 'ghostsign-clone-library-template': {
+			const body: IDataObject = {
+				library_template_id: str.call(this, itemIndex, 'libraryTemplateId'),
+				organization_id: str.call(this, itemIndex, 'organizationIdUpsert'),
+			};
+			const displayName = str.call(this, itemIndex, 'cloneLibraryDisplayName');
+			if (displayName) {
+				body.display_name = displayName;
+			}
+			return body;
+		}
+
+		case 'ghostsign-clone-workspace': {
+			const body: IDataObject = {
+				source_organization_id: str.call(this, itemIndex, 'sourceOrganizationId'),
+			};
+			const name = str.call(this, itemIndex, 'cloneWorkspaceName');
+			if (name) {
+				body.name = name;
+			}
 			return body;
 		}
 
@@ -159,6 +400,8 @@ export function ghostsignBuildNamedOpBody(
 		}
 
 		default:
-			throw new ApplicationError(`Unhandled endpoint body builder: ${endpointHint}`);
+			throw new NodeOperationError(this.getNode(), `Unhandled endpoint body builder: ${endpointHint}`, {
+				itemIndex,
+			});
 	}
 }

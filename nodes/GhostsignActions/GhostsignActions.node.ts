@@ -20,9 +20,26 @@ import {
 	ghostsignResolveActionsEndpoint,
 } from './namedBodies';
 
-const OPS_PROJECT_CORE = ['signingSend', 'signingResend', 'aiFill', 'projectChat', 'projectResearch', 'renderPreview', 'extractEmbed'];
+const OPS_PROJECT_CORE = [
+	'signingSend',
+	'signingResend',
+	'aiFill',
+	'projectChat',
+	'projectResearch',
+	'renderPreview',
+	'extractEmbed',
+	'proposalReviewSend',
+];
 
-const OPS_ORGS = ['upsertWebhook', 'upsertSmtp'];
+const OPS_ORGS = [
+	'upsertWebhook',
+	'upsertSmtp',
+	'smtpTest',
+	'ingestTemplate',
+	'cloneLibraryTemplate',
+	'aiTemplateDraft',
+	'publishTemplateDraft',
+];
 
 export class GhostsignActions implements INodeType {
 	description: INodeTypeDescription = {
@@ -96,6 +113,12 @@ export class GhostsignActions implements INodeType {
 						description: 'Needs Google connectivity on the authenticated actor (`ghostsign:preview:write`)',
 					},
 					{
+						action: 'Email proposal review links to recipients',
+						name: 'Preview › Send Review Links',
+						value: 'proposalReviewSend',
+						description: 'Requires saved SMTP + preview scope (`ghostsign:preview:write`)',
+					},
+					{
 						action: 'Invoke ghostsign resend finalize email for completed envelopes',
 						name: 'Signing › Resend Completed PDF',
 						value: 'signingResend',
@@ -106,6 +129,36 @@ export class GhostsignActions implements INodeType {
 						name: 'Signing › Send Invite',
 						value: 'signingSend',
 						description: 'Workspace SMTP (`ghostsign:signing:send`) must succeed before emailing',
+					},
+					{
+						action: 'Generate iterative ai template body with placeholder aware prompts',
+						name: 'Templates › AI Draft Body',
+						value: 'aiTemplateDraft',
+						description: 'Uses `ghostsign-ai-template-draft` (`ghostsign:ai:write`)',
+					},
+					{
+						action: 'Clone platform template into workspace google drive and ingest',
+						name: 'Templates › Clone Library Template',
+						value: 'cloneLibraryTemplate',
+						description: 'Requires template write scope (`ghostsign:template:write`)',
+					},
+					{
+						action: 'Import or refresh template from google doc',
+						name: 'Templates › Ingest From Google Doc',
+						value: 'ingestTemplate',
+						description: 'Create or refresh workspace template via `ghostsign-ingest-template`',
+					},
+					{
+						action: 'Create a google doc from ai template draft content',
+						name: 'Templates › Publish Draft To Doc',
+						value: 'publishTemplateDraft',
+						description: 'Publishes draft content using `ghostsign-publish-template-draft`',
+					},
+					{
+						action: 'Duplicate one workspace into a new workspace',
+						name: 'Workspace › Clone Workspace',
+						value: 'cloneWorkspace',
+						description: 'Copies templates/projects from source org (`ghostsign:org:write`)',
 					},
 				],
 				default: 'aiFill',
@@ -137,6 +190,34 @@ export class GhostsignActions implements INodeType {
 				description: 'From the prior **`session_id`** in the JSON response to continue the same thread',
 			},
 			{
+				displayName: 'AI Draft Mode',
+				name: 'aiDraftMode',
+				type: 'options',
+				default: 'organization',
+				displayOptions: { show: { operation: ['aiTemplateDraft'] } },
+				options: [
+					{ name: 'Admin Library', value: 'admin_library' },
+					{ name: 'Organization', value: 'organization' },
+				],
+			},
+			{
+				displayName: 'AI Draft Document Body',
+				name: 'aiDraftDocumentBody',
+				type: 'string',
+				typeOptions: { rows: 8 },
+				default: '',
+				displayOptions: { show: { operation: ['aiTemplateDraft'] } },
+			},
+			{
+				displayName: 'AI Draft Messages JSON',
+				name: 'aiDraftMessagesJson',
+				type: 'string',
+				typeOptions: { rows: 8 },
+				default: '',
+				displayOptions: { show: { operation: ['aiTemplateDraft'] } },
+				description: 'JSON array like `[{"role":"user","content":"Refine intro"}]`',
+			},
+			{
 				displayName: 'Variable Name',
 				name: 'variableNameAi',
 				type: 'string',
@@ -159,6 +240,34 @@ export class GhostsignActions implements INodeType {
 				displayOptions: { show: { operation: ['renderPreview'] } },
 				default: '',
 				description: 'Optional descriptive label tagging the rendered Drive revision',
+			},
+			{
+				displayName: 'Recipients JSON',
+				name: 'reviewRecipientsJson',
+				type: 'string',
+				typeOptions: {
+					rows: 6,
+				},
+				displayOptions: { show: { operation: ['proposalReviewSend'] } },
+				default: '',
+				description: 'JSON array like `[{"email":"client@example.com","name":"Client Name"}]`',
+			},
+			{
+				displayName: 'Review Label (Optional)',
+				name: 'reviewLabel',
+				type: 'string',
+				displayOptions: { show: { operation: ['proposalReviewSend'] } },
+				default: '',
+			},
+			{
+				displayName: 'Email Message (Optional)',
+				name: 'reviewMessage',
+				type: 'string',
+				typeOptions: {
+					rows: 4,
+				},
+				displayOptions: { show: { operation: ['proposalReviewSend'] } },
+				default: '',
 			},
 			{
 				displayName: 'Embedding Source Mode',
@@ -219,6 +328,101 @@ export class GhostsignActions implements INodeType {
 				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				displayOptions: { show: { operation: OPS_ORGS } },
 				typeOptions: { loadOptionsMethod: 'getOrganizations' },
+				default: '',
+			},
+			{
+				displayName: 'Library Template ID',
+				name: 'libraryTemplateId',
+				type: 'string',
+				displayOptions: { show: { operation: ['cloneLibraryTemplate'] } },
+				default: '',
+			},
+			{
+				displayName: 'Template Display Name (Optional)',
+				name: 'cloneLibraryDisplayName',
+				type: 'string',
+				displayOptions: { show: { operation: ['cloneLibraryTemplate'] } },
+				default: '',
+			},
+			{
+				displayName: 'Ingest Mode',
+				name: 'ingestMode',
+				type: 'options',
+				default: 'create',
+				displayOptions: { show: { operation: ['ingestTemplate'] } },
+				options: [
+					{ name: 'Create Template From Doc', value: 'create' },
+					{ name: 'Refresh Existing Template', value: 'refresh' },
+				],
+			},
+			{
+				displayName: 'Template ID (Refresh)',
+				name: 'ingestTemplateId',
+				type: 'string',
+				displayOptions: { show: { operation: ['ingestTemplate'], ingestMode: ['refresh'] } },
+				default: '',
+			},
+			{
+				displayName: 'Google Doc URL',
+				name: 'ingestDocUrl',
+				type: 'string',
+				displayOptions: { show: { operation: ['ingestTemplate'], ingestMode: ['create'] } },
+				default: '',
+			},
+			{
+				displayName: 'Google Document ID',
+				name: 'ingestDocumentId',
+				type: 'string',
+				displayOptions: { show: { operation: ['ingestTemplate'], ingestMode: ['create'] } },
+				default: '',
+			},
+			{
+				displayName: 'Template Display Name (Optional)',
+				name: 'ingestDisplayName',
+				type: 'string',
+				displayOptions: { show: { operation: ['ingestTemplate'], ingestMode: ['create'] } },
+				default: '',
+			},
+			{
+				displayName: 'Publish Mode',
+				name: 'publishDraftMode',
+				type: 'options',
+				default: 'organization',
+				displayOptions: { show: { operation: ['publishTemplateDraft'] } },
+				options: [
+					{ name: 'Admin Library', value: 'admin_library' },
+					{ name: 'Organization', value: 'organization' },
+				],
+			},
+			{
+				displayName: 'Publish Document Body',
+				name: 'publishDraftDocumentBody',
+				type: 'string',
+				typeOptions: { rows: 8 },
+				displayOptions: { show: { operation: ['publishTemplateDraft'] } },
+				default: '',
+			},
+			{
+				displayName: 'Template Display Name (Optional)',
+				name: 'publishDraftDisplayName',
+				type: 'string',
+				displayOptions: { show: { operation: ['publishTemplateDraft'] } },
+				default: '',
+			},
+			{
+				displayName: 'Source Organization Name or ID',
+				name: 'sourceOrganizationId',
+				type: 'options',
+				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				typeOptions: { loadOptionsMethod: 'getOrganizations' },
+				displayOptions: { show: { operation: ['cloneWorkspace'] } },
+				default: '',
+			},
+			{
+				displayName: 'New Workspace Name (Optional)',
+				name: 'cloneWorkspaceName',
+				type: 'string',
+				displayOptions: { show: { operation: ['cloneWorkspace'] } },
 				default: '',
 			},
 			{
@@ -292,6 +496,14 @@ export class GhostsignActions implements INodeType {
 				type: 'string',
 				displayOptions: { show: { operation: ['upsertWebhook'] } },
 				default: '',
+			},
+			{
+				displayName: 'SMTP Test Recipient',
+				name: 'smtpTestTo',
+				type: 'string',
+				displayOptions: { show: { operation: ['smtpTest'] } },
+				default: '',
+				description: 'Email address that should receive the SMTP test message',
 			},
 			{
 				displayName: 'Existing Webhook ID (Optional)',

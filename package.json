@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-ghostsign",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"description": "n8n community nodes for Ghostsign programmatic APIs hosted on Supabase Edge.",
 	"license": "MIT",
 	"homepage": "https://github.com/Ghostcoded-2025/n8n-nodes-ghostsign#readme",

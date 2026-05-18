@@ -34,7 +34,7 @@ Calls **`POST …/ghostsign-api`** (`op` in JSON body) — workspaces, templates
 
 ### Ghostsign Actions
 
-Named Edge helpers: signing invites, finalized PDF emails, proposal review links, **`ghostsign-ai-fill`**, **`ghostsign-project-chat`**, previews, embeddings, SMTP tests, template ingest/clone/draft publish, workspace clone, and SMTP/webhook upserts.
+Named Edge helpers: signing invites, signing reminders (pending signers only), finalized PDF emails, proposal review links, **`ghostsign-ai-fill`**, **`ghostsign-project-chat`**, previews, embeddings, SMTP tests, template ingest/clone/draft publish, workspace clone, and SMTP/webhook upserts.
 
 ## Upstream docs
 

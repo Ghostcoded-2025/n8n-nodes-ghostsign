@@ -7,10 +7,43 @@ function str(this: IExecuteFunctions, idx: number, name: string, def = ''): stri
 	return typeof v === 'string' ? v.trim() : '';
 }
 
+function buildSigningEnvelopeBody(
+	this: IExecuteFunctions,
+	itemIndex: number,
+	reminderOnly: boolean,
+): IDataObject {
+	const projectId = str.call(this, itemIndex, 'projectId');
+	if (!projectId) {
+		throw new NodeOperationError(this.getNode(), 'Signing operations require Project ID.', {
+			itemIndex,
+		});
+	}
+
+	const body: IDataObject = { project_id: projectId };
+
+	if (reminderOnly) {
+		body.reminder_only = true;
+	}
+
+	const inviteNote = str.call(this, itemIndex, 'signingInviteNote');
+	if (inviteNote) {
+		body.invite_note = inviteNote.slice(0, 2000);
+	}
+
+	const daysRaw = this.getNodeParameter('signingLinkExpiresDays', itemIndex, 7);
+	if (typeof daysRaw === 'number' && Number.isFinite(daysRaw)) {
+		body.signing_link_expires_in_days = Math.min(180, Math.max(1, Math.floor(daysRaw)));
+	}
+
+	return body;
+}
+
 export function ghostsignResolveActionsEndpoint(operation: string): string {
 	switch (operation) {
 		case 'signingSend':
 			return 'ghostsign-send-for-signature';
+		case 'signingReminder':
+			return 'ghostsign-send-for-signature-reminder';
 		case 'signingResend':
 			return 'ghostsign-resend-finalize-email';
 		case 'aiFill':
@@ -155,6 +188,9 @@ export function ghostsignBuildNamedOpBody(
 ): IDataObject {
 	switch (endpointHint) {
 		case 'ghostsign-send-for-signature':
+		case 'ghostsign-send-for-signature-reminder':
+			return buildSigningEnvelopeBody.call(this, itemIndex, endpointHint === 'ghostsign-send-for-signature-reminder');
+
 		case 'ghostsign-resend-finalize-email':
 			return { project_id: str.call(this, itemIndex, 'projectId') };
 

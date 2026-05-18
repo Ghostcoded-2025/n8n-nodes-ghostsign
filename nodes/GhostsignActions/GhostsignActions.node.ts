@@ -22,6 +22,7 @@ import {
 
 const OPS_PROJECT_CORE = [
 	'signingSend',
+	'signingReminder',
 	'signingResend',
 	'aiFill',
 	'projectChat',
@@ -128,7 +129,15 @@ export class GhostsignActions implements INodeType {
 						action: 'Invoke ghostsign send for signature email invites',
 						name: 'Signing › Send Invite',
 						value: 'signingSend',
-						description: 'Workspace SMTP (`ghostsign:signing:send`) must succeed before emailing',
+						description:
+							'Renders a fresh Drive preview, then emails signers (`ghostsign:signing:send`). Skips signers who already submitted on re-send.',
+					},
+					{
+						action: 'Email signing reminders to signers who have not submitted',
+						name: 'Signing › Send Reminder',
+						value: 'signingReminder',
+						description:
+							'Project must be `out_for_signature`. Reuses the existing envelope PDF; only pending signers (`ghostsign:signing:send`, `reminder_only`).',
 					},
 					{
 						action: 'Generate iterative ai template body with placeholder aware prompts',
@@ -169,6 +178,23 @@ export class GhostsignActions implements INodeType {
 				type: 'string',
 				default: '',
 				displayOptions: { show: { operation: OPS_PROJECT_CORE } },
+			},
+			{
+				displayName: 'Signing Link Expires In (Days)',
+				name: 'signingLinkExpiresDays',
+				type: 'number',
+				default: 7,
+				displayOptions: { show: { operation: ['signingSend', 'signingReminder'] } },
+				description: 'Optional. Default **7**. Applied to newly issued signing tokens (1–180).',
+			},
+			{
+				displayName: 'Invite Note (Optional)',
+				name: 'signingInviteNote',
+				type: 'string',
+				typeOptions: { rows: 4 },
+				displayOptions: { show: { operation: ['signingSend', 'signingReminder'] } },
+				default: '',
+				description: 'Personal note inlined in the signing email (max 2000 characters)',
 			},
 			{
 				displayName: 'Chat Message',

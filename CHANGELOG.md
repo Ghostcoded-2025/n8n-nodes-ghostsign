@@ -1,3 +1,8 @@
+## 0.1.10
+
+- Added **Ghostsign Actions › Signing › Send Reminder** (`signingReminder` → `ghostsign-send-for-signature` with `reminder_only`) for pending signers on `out_for_signature` projects.
+- **Signing › Send Invite** and **Send Reminder** support optional **Invite Note** and **Signing Link Expires In (Days)**.
+
 ## 0.1.9
 
 - Fixed **Ghostsign Actions › AI › Chat With Project** endpoint routing (`projectChat` now maps to `ghostsign-project-chat`).

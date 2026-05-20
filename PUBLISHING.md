@@ -14,29 +14,28 @@ This repo is published as a **public** npm package with **`npm publish` provenan
 
 Pick **one** approach.
 
-### Option A — Trusted Publishing (OIDC, no long-lived secret)
+### Option A — Trusted Publishing (OIDC, no long-lived secret) — **default when NPM_TOKEN is unset**
 
 1. Sign in at [npmjs.com](https://www.npmjs.com) → **n8n-nodes-ghostsign** → **Publishing access / Trusted Publishers**.
 2. Link **GitHub Actions** → owner **`Ghostcoded-2025`**, repo **`n8n-nodes-ghostsign`**, workflow file **`publish.yml`**.
-3. **Delete** the **`NPM_TOKEN`** repo secret and change **`publish.yml`** to use `setup-node` with `registry-url` only (no manual token step). This repo currently ships with **Option B** because that is what published **0.1.10**.
+3. Ensure **`NPM_TOKEN`** is **not** set in GitHub Actions secrets (or delete it). The workflow uses `setup-node` **`registry-url`** + OIDC.
 
-### Option B — Automation token (`NPM_TOKEN`) — **current workflow**
+### Option B — Automation token (`NPM_TOKEN`)
 
 1. npm → **Access tokens** → **Generate New Token** → **Classic → Automation** (or granular with **publish** on **`n8n-nodes-ghostsign`**).
-2. GitHub repo → **Settings → Secrets and variables → Actions** → secret **`NPM_TOKEN`** — paste the new token.
-3. Re-run **Publish** (push the semver tag again, or **Actions → Publish → Run workflow** with tag **`0.1.11`**).
+2. GitHub repo → **Settings → Secrets and variables → Actions** → secret **`NPM_TOKEN`**. When set, it overrides OIDC in the **Verify npm credentials** step.
 
-If the token expires, **`npm whoami`** in CI fails or publish returns **`404 Not Found`** even though the package exists. Regenerate the token and update the secret.
+If the token expires, **`npm whoami`** fails or publish returns **`404 Not Found`**. Regenerate the token and update the secret.
 
-If publishes fail with **403** citing **two‑factor authentication**, the token cannot publish unattended—use **Automation**, or granular with bypass for publishing.
+If publishes fail with **403** citing **two‑factor authentication**, use **Automation** or granular with bypass for publishing.
 
-### Troubleshooting `404` on publish
+### Troubleshooting publish failures
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| `404 Not Found` on `PUT …/n8n-nodes-ghostsign` | Expired/wrong **`NPM_TOKEN`** | Regenerate npm **Automation** token; update **`NPM_TOKEN`** secret; re-run **Publish** |
-| `Verify npm credentials` fails | Secret missing or revoked | Set **`NPM_TOKEN`** (Option B) or switch to Trusted Publishing (Option A) |
-| `403` / 2FA | Granular token without publish automation | Use **Automation** token |
+| `Verify npm credentials` / `npm whoami` fails, no NPM_TOKEN | Trusted Publisher not linked on npm | Complete Option A on npmjs.com |
+| `404 Not Found` on publish with NPM_TOKEN set | Expired/wrong token | Regenerate **Automation** token; update **`NPM_TOKEN`** |
+| `404` without NPM_TOKEN | Trusted Publisher mismatch (wrong org/repo/workflow name) | Match **`Ghostcoded-2025` / `n8n-nodes-ghostsign` / `publish.yml`** exactly |
 | Workflow green but npm still on old version | Tag did not match `*.*.*` | Push semver tag without `v` prefix (e.g. `0.1.11`) |
 
 ## What triggers a publish?

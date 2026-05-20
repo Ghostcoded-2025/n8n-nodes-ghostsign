@@ -16,20 +16,30 @@ Pick **one** approach.
 
 ### Option A — Trusted Publishing (recommended)
 
-1. Sign in at [npmjs.com](https://www.npmjs.com) → your package (**create the package placeholder if first publish**) → **Publishing access / Trusted Publishers**.
-2. Link **GitHub Actions** → this repository and workflow **`publish.yml`** (exact name as in [.github/workflows/publish.yml](.github/workflows/publish.yml)).
-3. Do **not** set **`NPM_TOKEN`** in repo secrets unless you deliberately want Option B alongside it.
+1. Sign in at [npmjs.com](https://www.npmjs.com) → **n8n-nodes-ghostsign** → **Publishing access / Trusted Publishers**.
+2. Link **GitHub Actions** → owner **`Ghostcoded-2025`**, repo **`n8n-nodes-ghostsign`**, workflow file **`publish.yml`** (exact filename).
+3. **Delete** the **`NPM_TOKEN`** repo secret if it exists. A stale or expired token is written to `.npmrc` and **overrides OIDC**, which often surfaces as **`404 Not Found`** on `npm publish` even though the package exists.
 
 npm authenticates OIDC from the workflow; provenance still applies.
 
 ### Option B — Automation token (`NPM_TOKEN`)
 
+Use only when Trusted Publishing is **not** configured.
+
 1. npm → **Access tokens** → create a token that can publish from CI (**Classic → Automation**, or granular with **publish** scope and automation / bypass‑2FA for publishing as npm requires).
-2. GitHub repo → **Settings → Secrets and variables → Actions** → secret name **`NPM_TOKEN`** (must match what `publish.yml` reads).
+2. GitHub repo → **Settings → Secrets and variables → Actions** → secret name **`NPM_TOKEN`** (must match what `publish.yml` passes as `NODE_AUTH_TOKEN`).
 
 If publishes fail with **403** citing **two‑factor authentication**, the token cannot publish unattended—use **Automation**, or granular with bypass for publishing.
 
 For the **first** version of an **unscoped** package, granular tokens scoped only to **`@your-scope/...`** may not authorize **`n8n-nodes-ghostsign`**—use **all packages** publish or **Classic Automation** until the name exists.
+
+### Troubleshooting `404` on publish
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `404 Not Found` on `PUT …/n8n-nodes-ghostsign` | Expired/wrong **`NPM_TOKEN`** overriding OIDC | Remove **`NPM_TOKEN`** secret; confirm Trusted Publisher on npm; re-run **Publish** for the tag |
+| `403` / 2FA | Granular token without publish automation | Use **Automation** token or Trusted Publishing |
+| Workflow green but npm still on old version | Tag did not match `*.*.*` | Push semver tag without `v` prefix (e.g. `0.1.11`) |
 
 ## What triggers a publish?
 

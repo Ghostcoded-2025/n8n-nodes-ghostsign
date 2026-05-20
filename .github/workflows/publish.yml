@@ -1,9 +1,10 @@
 # Publishes this n8n community node package to npm on every version tag push.
 #
-# Auth: npm Trusted Publishing (OIDC) via setup-node `registry-url`. Do NOT set a
-# stale NPM_TOKEN secret — an invalid token in .npmrc overrides OIDC and yields 404.
-# Fallback: valid Automation token — add a Release step env `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`
-# only if Trusted Publishing is not configured (see PUBLISHING.md).
+# Auth: NPM_TOKEN repo secret (Classic Automation or granular publish token).
+# 404 on publish almost always means the secret is expired — regenerate on npmjs.com
+# and update GitHub → Settings → Secrets → NPM_TOKEN.
+#
+# Alternative: delete NPM_TOKEN and use npm Trusted Publishing (OIDC) — see PUBLISHING.md.
 
 name: Publish
 
@@ -40,10 +41,21 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify npm credentials
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::NPM_TOKEN secret is missing. Create an npm Automation token with publish access to n8n-nodes-ghostsign and add it as the NPM_TOKEN Actions secret (see PUBLISHING.md)."
+            exit 1
+          fi
+          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          npm config delete always-auth 2>/dev/null || true
+          echo "Authenticated as $(npm whoami)"
+
       - name: Release
         run: npm run release
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

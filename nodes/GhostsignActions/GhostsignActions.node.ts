@@ -108,6 +108,13 @@ export class GhostsignActions implements INodeType {
 						description: 'Requires signing integration scope (`ghostsign:integration:write`)',
 					},
 					{
+						action: 'Cancel an open proposal review round',
+						name: 'Preview › Cancel Review Round',
+						value: 'proposalReviewCancel',
+						description:
+							'Closes an open round (`ghostsign-proposal-review-cancel`, `ghostsign:preview:write`). Recipients can still read PDF and comments.',
+					},
+					{
 						action: 'Invoke ghostsign render preview to bake a docs preview revision',
 						name: 'Preview › Render Doc',
 						value: 'renderPreview',
@@ -294,6 +301,22 @@ export class GhostsignActions implements INodeType {
 				},
 				displayOptions: { show: { operation: ['proposalReviewSend'] } },
 				default: '',
+			},
+			{
+				displayName: 'Review Link Expires In (Days)',
+				name: 'reviewOfferExpiresDays',
+				type: 'number',
+				default: 14,
+				displayOptions: { show: { operation: ['proposalReviewSend'] } },
+				description: 'Optional. Default **14**. Applied to recipient review links (1–365).',
+			},
+			{
+				displayName: 'Proposal Review ID',
+				name: 'proposalReviewId',
+				type: 'string',
+				default: '',
+				displayOptions: { show: { operation: ['proposalReviewCancel'] } },
+				description: 'UUID of the open review round (from send response or project pipeline)',
 			},
 			{
 				displayName: 'Embedding Source Mode',

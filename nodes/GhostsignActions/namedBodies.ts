@@ -60,6 +60,8 @@ export function ghostsignResolveActionsEndpoint(operation: string): string {
 			return 'ghostsign-render-preview';
 		case 'proposalReviewSend':
 			return 'ghostsign-proposal-review-send';
+		case 'proposalReviewCancel':
+			return 'ghostsign-proposal-review-cancel';
 		case 'extractEmbed':
 			return 'ghostsign-extract-embed';
 		case 'smtpTest':
@@ -296,7 +298,23 @@ export function ghostsignBuildNamedOpBody(
 				body.message = reviewMessage;
 			}
 
+			const reviewExpiresDaysRaw = this.getNodeParameter('reviewOfferExpiresDays', itemIndex, 14);
+			if (typeof reviewExpiresDaysRaw === 'number' && Number.isFinite(reviewExpiresDaysRaw)) {
+				body.offer_expires_in_days = Math.min(365, Math.max(1, Math.floor(reviewExpiresDaysRaw)));
+			}
+
 			return body;
+		}
+
+		case 'ghostsign-proposal-review-cancel': {
+			const proposalReviewId = str.call(this, itemIndex, 'proposalReviewId');
+			if (!proposalReviewId) {
+				throw new NodeOperationError(this.getNode(), 'Proposal review cancel requires Proposal Review ID.', {
+					itemIndex,
+				});
+			}
+
+			return { proposal_review_id: proposalReviewId };
 		}
 
 		case 'ghostsign-extract-embed': {

@@ -1,3 +1,8 @@
+## 0.1.11
+
+- Added **Ghostsign Actions › Preview › Cancel Review Round** (`proposalReviewCancel` → `ghostsign-proposal-review-cancel`) for open proposal review rounds.
+- **Preview › Send Review Links** supports **Review Link Expires In (Days)** (`offer_expires_in_days`, default **14**).
+
 ## 0.1.10
 
 - Added **Ghostsign Actions › Signing › Send Reminder** (`signingReminder` → `ghostsign-send-for-signature` with `reminder_only`) for pending signers on `out_for_signature` projects.

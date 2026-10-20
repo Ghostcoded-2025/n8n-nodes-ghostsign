@@ -71,6 +71,23 @@ nodes and/or credentials, you need to make sure to update `n8n.nodes` and
 project _may_ contain example nodes and/or credentials that need to be
 **removed or renamed** once you start making an actual node.
 
+## Testing without GitHub Actions
+
+This repo no longer runs CI on GitHub Actions. Before opening or updating a PR,
+the agent runs the repo's lint and build (and tests if any) on its own VM. Run
+targeted checks while iterating; run the full suite once before the PR is
+presented; re-run only failures. Paste a pass/fail summary table into the PR
+body. Nothing goes to Tanner for merge without a green suite plus new tests for
+new work. Never add new GitHub Actions workflows.
+
+The removed `ci.yml` workflow used Node.js 24 and ran, in order:
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
+
 ## Key guidelines
 - Use the `n8n-node` CLI tool **whenever possible** for building, dev mode,
   linting, etc.
